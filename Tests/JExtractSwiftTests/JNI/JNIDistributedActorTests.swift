@@ -34,16 +34,16 @@ struct JNIDistributedActorTests {
       expectedChunks: [
         """
         public java.util.concurrent.CompletableFuture<java.lang.Void> hi() {
-          java.util.concurrent.CompletableFuture<java.lang.Void> future$ = new java.util.concurrent.CompletableFuture<java.lang.Void>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void>();
           D.$hi(this.$memoryAddress(), future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $hi(long selfPointer, java.util.concurrent.CompletableFuture<java.lang.Void> result_future);
+        private static native void $hi(long selfPointer, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> result_future);
         """,
       ],
       notExpectedChunks: [
@@ -62,7 +62,7 @@ struct JNIDistributedActorTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_D__00024hi__JLjava_util_concurrent_CompletableFuture_2")
+        @_cdecl("Java_com_example_swift_D__00024hi__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2")
         ...
         task = Task.immediate {
         ...

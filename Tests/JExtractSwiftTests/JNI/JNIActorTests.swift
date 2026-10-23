@@ -43,16 +43,16 @@ struct JNIActor1MethodsTests {
       expectedChunks: [
         """
         public java.util.concurrent.CompletableFuture<java.lang.Void> hello() {
-          java.util.concurrent.CompletableFuture<java.lang.Void> future$ = new java.util.concurrent.CompletableFuture<java.lang.Void>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void>();
           K.$hello(this.$memoryAddress(), future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $hello(long selfPointer, java.util.concurrent.CompletableFuture<java.lang.Void> result_future);
+        private static native void $hello(long selfPointer, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> result_future);
         """,
       ],
       notExpectedChunks: [
@@ -71,7 +71,7 @@ struct JNIActor1MethodsTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_K__00024hello__JLjava_util_concurrent_CompletableFuture_2")
+        @_cdecl("Java_com_example_swift_K__00024hello__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2")
         ...
         task = Task.immediate {
         ...
@@ -91,16 +91,16 @@ struct JNIActor1MethodsTests {
       expectedChunks: [
         """
         public java.util.concurrent.CompletableFuture<java.lang.Void> hi() {
-          java.util.concurrent.CompletableFuture<java.lang.Void> future$ = new java.util.concurrent.CompletableFuture<java.lang.Void>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void>();
           K.$hi(this.$memoryAddress(), future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $hi(long selfPointer, java.util.concurrent.CompletableFuture<java.lang.Void> result_future);
+        private static native void $hi(long selfPointer, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> result_future);
         """,
       ],
       notExpectedChunks: [
@@ -119,7 +119,7 @@ struct JNIActor1MethodsTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_K__00024hi__JLjava_util_concurrent_CompletableFuture_2")
+        @_cdecl("Java_com_example_swift_K__00024hi__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2")
         ...
         task = Task.immediate {
         ...
@@ -235,16 +235,16 @@ struct JNIActor1MethodsTests {
       expectedChunks: [
         """
         public java.util.concurrent.CompletableFuture<java.lang.Void> concurrentlyAsync() {
-          java.util.concurrent.CompletableFuture<java.lang.Void> future$ = new java.util.concurrent.CompletableFuture<java.lang.Void>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void>();
           K.$concurrentlyAsync(this.$memoryAddress(), future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $concurrentlyAsync(long selfPointer, java.util.concurrent.CompletableFuture<java.lang.Void> result_future);
+        private static native void $concurrentlyAsync(long selfPointer, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> result_future);
         """,
       ],
       notExpectedChunks: [
@@ -263,7 +263,7 @@ struct JNIActor1MethodsTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_K__00024concurrentlyAsync__JLjava_util_concurrent_CompletableFuture_2")
+        @_cdecl("Java_com_example_swift_K__00024concurrentlyAsync__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2")
         ...
         task = Task.immediate {
         ...

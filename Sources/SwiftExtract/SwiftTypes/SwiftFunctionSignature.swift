@@ -33,6 +33,11 @@ public struct SwiftFunctionSignature: Equatable {
 
   public var isNonisolated: Bool = false
 
+  /// The protocol through which an immutable actor property's synchronous getter
+  /// must be accessed. Direct access to the stored property is isolated outside
+  /// the actor's defining module, even when it witnesses a nonisolated requirement.
+  public var nonisolatedWitnessProtocol: SwiftType? = nil
+
   public var isDistributed: Bool = false
 
   public var isAsync: Bool {
@@ -374,6 +379,21 @@ extension SwiftFunctionSignature {
     }
     let valueType = try SwiftType(varTypeNode, lookupContext: lookupContext)
 
+    self.isNonisolated = varNode.modifiers.contains { $0.name.tokenKind == .keyword(.nonisolated) }
+    if !isNonisolated, !isSet, case .instance = selfParameter,
+      enclosingType?.isActor == true,
+      varNode.bindingSpecifier.tokenKind == .keyword(.let),
+      let name = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
+    {
+      self.nonisolatedWitnessProtocol = Self.synchronousPropertyWitness(
+        name: name,
+        valueType: valueType,
+        enclosingType: enclosingType!,
+        lookupContext: lookupContext
+      )
+      self.isNonisolated = nonisolatedWitnessProtocol != nil
+    }
+
     var accessorEffects: AccessorEffects? = nil
     switch binding.accessorBlock?.accessors {
     case .getter(let getter):
@@ -402,6 +422,75 @@ extension SwiftFunctionSignature {
     }
     self.genericParameters = []
     self.genericRequirements = []
+  }
+
+  /// Conservatively find an ordinary protocol getter witnessed by an actor's
+  /// immutable stored property. Async, throwing, and actor-isolated requirements
+  /// do not provide a synchronous access path for the generated thunk.
+  private static func synchronousPropertyWitness(
+    name: String,
+    valueType: SwiftType,
+    enclosingType: SwiftType,
+    lookupContext: SwiftTypeLookupContext
+  ) -> SwiftType? {
+    func inheritedTypes(of declaration: SwiftNominalTypeDeclaration) -> [SwiftType] {
+      (declaration.inheritanceTypes ?? []).compactMap {
+        try? SwiftType($0.type, lookupContext: lookupContext)
+      }
+    }
+
+    func isNonisolatedProtocol(_ type: SwiftType, visited: inout Set<SwiftNominalIdentity>) -> Bool {
+      guard let declaration = type.asNominalTypeDeclaration,
+        let syntax = declaration.syntax.as(ProtocolDeclSyntax.self),
+        // Attributes can introduce global-actor isolation. Leave these cases
+        // isolated rather than infer semantics from an unfamiliar attribute.
+        syntax.attributes.isEmpty,
+        declaration.name != "Actor", declaration.name != "DistributedActor"
+      else { return false }
+      if !visited.insert(declaration.identity).inserted { return true }
+      return (declaration.inheritanceTypes ?? []).allSatisfy { inherited in
+        guard let type = try? SwiftType(inherited.type, lookupContext: lookupContext) else { return false }
+        return isNonisolatedProtocol(type, visited: &visited)
+      }
+    }
+
+    func hasGetter(_ type: SwiftType, visited: inout Set<SwiftNominalIdentity>) -> Bool {
+      guard let declaration = type.asNominalTypeDeclaration,
+        visited.insert(declaration.identity).inserted
+      else { return false }
+      if declaration.syntax.memberBlock.members.contains(where: { member in
+        guard let property = member.decl.as(VariableDeclSyntax.self),
+          property.attributes.isEmpty,
+          !property.modifiers.contains(where: {
+            $0.name.tokenKind == .keyword(.static) || $0.name.tokenKind == .keyword(.class)
+          })
+        else { return false }
+        return property.bindings.contains { binding in
+          guard binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text == name,
+            let annotation = binding.typeAnnotation,
+            (try? SwiftType(annotation.type, lookupContext: lookupContext)) == valueType,
+            case .accessors(let accessors) = binding.accessorBlock?.accessors,
+            accessors.count == 1, let getter = accessors.first,
+            getter.accessorSpecifier.tokenKind == .keyword(.get),
+            getter.effectSpecifiers?.asyncSpecifier == nil,
+            getter.effectSpecifiers?.throwsClause == nil
+          else { return false }
+          return true
+        }
+      }) {
+        return true
+      }
+      return inheritedTypes(of: declaration).contains { hasGetter($0, visited: &visited) }
+    }
+
+    for type in enclosingType.asNominalTypeDeclaration.map(inheritedTypes) ?? [] {
+      var isolationVisited: Set<SwiftNominalIdentity> = []
+      var getterVisited: Set<SwiftNominalIdentity> = []
+      if isNonisolatedProtocol(type, visited: &isolationVisited), hasGetter(type, visited: &getterVisited) {
+        return type
+      }
+    }
+    return nil
   }
 
   public init(

@@ -30,6 +30,29 @@ struct JNIEnumTests {
     }
     """
 
+  @Test(
+    "Enum case records avoid enclosing Java type names",
+    arguments: [("message", "MessageCase"), ("caseCase", "CaseCaseCase"), ("`case`", "CaseCaseCase"), ("plain", "Plain")]
+  )
+  func enclosingNameCollisions_java(caseName: String, recordName: String) throws {
+    try assertOutput(
+      input: """
+        public struct CaseCase {
+          public enum Message {
+            case \(caseName)(Int64)
+          }
+        }
+        """,
+      .jni,
+      .java,
+      expectedChunks: [
+        "record \(recordName)(long arg0) implements Case {}",
+        "public java.util.Optional<Case.\(recordName)> getAs\(recordName)()",
+      ],
+      notExpectedChunks: ["record Message(", "record Case(", "record CaseCase("]
+    )
+  }
+
   @Test
   func generatesJavaClass() throws {
     try assertOutput(

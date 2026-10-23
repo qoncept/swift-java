@@ -618,6 +618,13 @@ expose both their own and their inherited requirements.
 A handful of Foundation value types are recognized by name and bridged to a
 matching Java representation, rather than being treated as opaque Swift values.
 
+With `enableJavaCallbacks` enabled in JNI mode, protocol methods can accept and
+return `Data`, `Date`, `URL`, and `UUID` from either `Foundation` or
+`FoundationEssentials`. `Data`, `Date`, and `URL` use the generated Swift wrapper
+classes; `UUID` uses `java.util.UUID`. Optional `Data` and `Date` values are also
+supported. Optional `URL`/`UUID` parameters and arrays of Foundation values remain
+unsupported by JNI method extraction.
+
 #### Data
 
 Swift methods accepting or returning `Foundation.Data` are extracted using the

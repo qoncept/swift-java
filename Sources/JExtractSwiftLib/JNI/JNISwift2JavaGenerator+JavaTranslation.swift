@@ -151,7 +151,13 @@ extension JNISwift2JavaGenerator {
       let associatedValueTypes = enumCase.parameters.map { param in
         param.type.description
       }.joined(separator: .comma)
-      let javaCaseClassName = enumCase.name.firstCharacterUppercased
+      var javaCaseClassName = enumCase.name.firstCharacterUppercased
+      // Java forbids a nested record from sharing an enclosing type's name.
+      // For example Calendar.Component.Case.Calendar must be CalendarCase.
+      let enclosingNames = enumCase.enumType.nominalTypeDecl.qualifiedTypeName.components + ["Case"]
+      while enclosingNames.contains(javaCaseClassName) {
+        javaCaseClassName += "Case"
+      }
       let resultType = knownTypes.optionalSugar(
         .tuple(
           enumCase.parameters.map {

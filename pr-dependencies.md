@@ -55,6 +55,23 @@ dependencies to the graph.
 | [#10](https://github.com/qoncept/swift-java/pull/10) | `ASYNC_CANCEL` | Forward cancellation through generated result conversion to the Swift task, preserving legacy Future behavior. | Not opened | `codex/fix-jni-async-cancellation` | [`8c2c819`](https://github.com/qoncept/swift-java/commit/8c2c819aa6dd3196f4a62b4620a5a0233d991604) |
 | [#11](https://github.com/qoncept/swift-java/pull/11) | `PROTOCOL_DEFAULTS` | Bridge supported Swift requirement defaults to Java interface default methods, including refinements and nested protocols. | Not opened | `codex/bridge-jni-protocol-default-methods` | [`08f9082`](https://github.com/qoncept/swift-java/commit/08f908272438d9d6e3e63a8421197bdd0fe6071b) |
 
+
+### Generated-output follow-ups
+
+Origin [#13](https://github.com/qoncept/swift-java/pull/13), on
+`codex/refresh-generated-wrapper-outputs`, contains generated-output follow-ups
+for existing fixes rather than another feature node in the graph:
+
+- Include [`558e8a2`](https://github.com/qoncept/swift-java/commit/558e8a27c4bbdf16305ff1b0766b776610ee50dc)
+  with `OPTIONAL_CALLS` (origin #8). It refreshes the checked-in Optional
+  conveniences so regenerating wrappers does not change their receiver calls.
+- Include [`d479825`](https://github.com/qoncept/swift-java/commit/d479825bbe40fe5744f26586e847fe38de58405d)
+  with `FOUNDATION` (origin #5). It replaces the hand-written UUID projection with
+  its generated file, avoiding duplicate declarations after regeneration.
+
+Each follow-up applies after its corresponding fix alone. Fold it into that
+fix's upstream submission; it does not add a dependency between origins #5 and #8.
+
 ## Why these dependencies exist
 
 - **`PROTOCOL_EXT` → `PROTOCOL_NAMES`:** `PROTOCOL_EXT` introduces
@@ -111,6 +128,8 @@ commits above. Each check starts with a temporary Git index containing upstream
 | Proposed origin patch | Prerequisites applied first | Result |
 | --- | --- | --- |
 | #1, #2, #4, #5, #7, #8, #9, #10 (each checked separately) | None | Pass |
+| #5 plus its UUID output follow-up from #13 | None; apply #5, then `d479825` | Pass |
+| #8 plus its Optional output follow-up from #13 | None; apply #8, then `558e8a2` | Pass |
 | #3 | None | Does not apply |
 | #3 | #2 | Pass |
 | #11 | None | Does not apply |
@@ -131,7 +150,8 @@ Swift and Java tests after adapting each patch to its eventual upstream base.
    `ASYNC_CANCEL` (#10) against upstream `main` independently. They need not wait
    for #938 or for one another. Prioritize origin #2 to unblock the protocol
    naming/default chain; there is no required order among the other independent
-   submissions.
+   submissions. Include the matching generated-output follow-ups from origin
+   #13 with origins #5 and #8, as described above.
 2. **Requirement naming:** submit `PROTOCOL_NAMES` (origin #3) after the
    upstream equivalent of origin #2 merges.
 3. **Protocol defaults:** submit `PROTOCOL_DEFAULTS` (origin #11) after the

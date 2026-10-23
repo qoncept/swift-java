@@ -554,6 +554,12 @@ currently supports tuples of primitive elements only.
 Swift `protocol` types are imported as Java `interface`s. Concrete types wrapping
 a Swift instance can be passed to protocol-typed parameters.
 
+In JNI mode, only requirements declared in the protocol body become Java callback
+requirements. Additional methods, computed properties, static helpers, and
+initializers declared in protocol extensions retain their Swift implementations;
+they do not add requirements to the Java interface or prevent an otherwise
+supported protocol from being implemented in Java.
+
 > Note: `any DataProtocol` is handled as `Foundation.Data` in FFM mode; see below.
 
 @TabNavigator {

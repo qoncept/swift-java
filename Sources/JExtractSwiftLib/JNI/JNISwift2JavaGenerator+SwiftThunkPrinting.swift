@@ -726,7 +726,7 @@ extension JNISwift2JavaGenerator {
     }
 
     // Callee
-    let callee: String =
+    let directCallee: String =
       switch decl.functionSignature.selfParameter {
       case .instance:
         nativeSignature.selfParameter!.conversion.render(
@@ -738,6 +738,11 @@ extension JNISwift2JavaGenerator {
       case .none:
         swiftModuleName
       }
+
+    let callee =
+      decl.functionSignature.nonisolatedWitnessProtocol.map {
+        "(\(directCallee) as any \($0))"
+      } ?? directCallee
 
     // Build the result
     let result: String

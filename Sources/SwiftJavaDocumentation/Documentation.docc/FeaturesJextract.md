@@ -549,6 +549,14 @@ currently supports tuples of primitive elements only.
    }
 }
 
+### Actor properties in JNI mode
+
+Explicitly `nonisolated` actor properties are imported synchronously. An immutable
+actor property that witnesses an ordinary synchronous, nonthrowing protocol getter
+is also imported synchronously; its JNI thunk reads the property through the
+protocol so that the access remains valid across module boundaries. Other
+actor-isolated properties retain asynchronous access through a future.
+
 ### Protocols
 
 Swift `protocol` types are imported as Java `interface`s. Concrete types wrapping

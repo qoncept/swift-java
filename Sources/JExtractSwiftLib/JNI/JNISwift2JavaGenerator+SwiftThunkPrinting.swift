@@ -311,7 +311,7 @@ extension JNISwift2JavaGenerator {
     printer.println()
 
     self.currentJavaIdentifiers = JavaIdentifierFactory(
-      type.initializers + type.variables + type.methods
+      type.swiftNominal.kind == .protocol ? self.allProtocolRequirementMethods(of: type) : type.initializers + type.variables + type.methods
     )
 
     switch type.swiftNominal.kind {
@@ -396,6 +396,7 @@ extension JNISwift2JavaGenerator {
     let boxParentName = SwiftQualifiedTypeName(type.swiftNominal.javaExistentialBoxName)
 
     for method in self.allProtocolRequirementMethods(of: type) {
+      self.currentJavaIdentifiers = identifiers(forProtocolRequirement: method)
       guard var translated = try? self.javaTranslator.translate(method) else {
         self.logger.debug("Failed to translate protocol requirement for existential box dispatch thunk: \(method)")
         continue

@@ -173,7 +173,7 @@ extension JNISwift2JavaGenerator {
     let filename = "\(decl.effectiveJavaSimpleName).java"
     logger.debug("Printing contents: \(filename)")
 
-    resetForNewOutputFile(decl.initializers + decl.variables + decl.methods)
+    resetForNewOutputFile(decl.swiftNominal.kind == .protocol ? self.allProtocolRequirementMethods(of: decl) : decl.initializers + decl.variables + decl.methods)
 
     printHeader(&printer)
     printPackage(&printer)
@@ -283,6 +283,7 @@ extension JNISwift2JavaGenerator {
       printer.println()
 
       for method in self.allProtocolRequirementMethods(of: decl) {
+        self.currentJavaIdentifiers = identifiers(forProtocolRequirement: method)
         printExistentialBoxMethod(&printer, decl, method)
         printer.println()
       }

@@ -203,9 +203,23 @@ extension JNISwift2JavaGenerator {
   /// (getters/setters), excluding statics and anything whose signature
   /// doesn't translate (e.g. referencing `Self`/associated types).
   func supportedProtocolRequirements(of type: ExtractedNominalType) -> [ExtractedFunc] {
+    // Probe support without caching names before the declaring interface's
+    // complete requirement set has been selected for overload disambiguation.
     (type.methods + type.variables).filter { requirement in
-      requirement.isProtocolRequirement && !requirement.isStatic && !requirement.isClass && self.translatedDecl(for: requirement) != nil
+      requirement.isProtocolRequirement && !requirement.isStatic && !requirement.isClass
+        && (try? self.javaTranslator.translate(requirement)) != nil
     }
+  }
+
+  /// Use the declaring interface's names when implementing an inherited requirement.
+  /// A refined protocol may introduce overloads, but cannot rename a parent's API.
+  func identifiers(forProtocolRequirement requirement: ExtractedFunc) -> JavaIdentifierFactory {
+    guard let name = requirement.parentType?.asNominalType?.nominalTypeDecl.qualifiedName,
+      let owner = analysis.extractedTypes[name]
+    else {
+      fatalError("Missing declaring protocol for requirement: \(requirement)")
+    }
+    return JavaIdentifierFactory(allProtocolRequirementMethods(of: owner))
   }
 
   /// All wrappable requirements for `type` (a protocol), including those

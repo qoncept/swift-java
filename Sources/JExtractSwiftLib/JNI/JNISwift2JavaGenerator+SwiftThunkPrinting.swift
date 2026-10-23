@@ -572,6 +572,12 @@ extension JNISwift2JavaGenerator {
         parentName: decl.parentType?.asNominalType?.nominalTypeDecl.qualifiedTypeName ?? SwiftQualifiedTypeName(swiftModuleName),
       )
       let implementingProtocols = protocolWrappers.map(\.wrapperName).joined(separator: .comma)
+      // Overloads with the same protocol parameter share an identical adapter.
+      if let existing = emittedProtocolParameterWrappers[swiftClassName] {
+        precondition(existing == implementingProtocols, "Conflicting protocol adapters for \(swiftClassName)")
+        continue
+      }
+      emittedProtocolParameterWrappers[swiftClassName] = implementingProtocols
 
       printer.printBraceBlock("final class \(swiftClassName): \(implementingProtocols)") { printer in
         let variables: [(String, String)] = protocolWrappers.map { wrapper in

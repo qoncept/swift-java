@@ -224,6 +224,13 @@ extension JNISwift2JavaGenerator {
               elementType: element
             )
 
+          case .foundationData, .essentialsData, .foundationDate, .essentialsDate,
+            .foundationURL, .essentialsURL:
+            break
+
+          case .foundationUUID, .essentialsUUID:
+            return .toJavaUUID(.placeholder)
+
           default:
             throw JavaTranslationError.unsupportedSwiftType(type)
           }
@@ -301,6 +308,17 @@ extension JNISwift2JavaGenerator {
 
           case .array(let element):
             return try self.translateArrayResult(elementType: element)
+
+          case .foundationData, .essentialsData, .foundationDate, .essentialsDate,
+            .foundationURL, .essentialsURL:
+            break
+
+          case .foundationUUID, .essentialsUUID:
+            let inner: UpcallConversionStep =
+              !allowNilForObjects
+              ? .unwrapOptional(.placeholder, message: "Upcall to \(methodName) unexpectedly returned nil")
+              : .placeholder
+            return .fromJavaUUID(inner)
 
           default:
             throw JavaTranslationError.unsupportedSwiftType(type)
@@ -389,6 +407,10 @@ enum UpcallConversionStep {
     message: String
   )
 
+  indirect case toJavaUUID(UpcallConversionStep)
+
+  indirect case fromJavaUUID(UpcallConversionStep)
+
   indirect case toJavaOptional(UpcallConversionStep)
 
   indirect case fromJavaOptional(UpcallConversionStep)
@@ -441,6 +463,14 @@ enum UpcallConversionStep {
       )
 
       return "unwrapped$"
+
+    case .toJavaUUID(let inner):
+      let inner = inner.render(&printer, placeholder)
+      return "try! JavaClass<JavaUtilUUID>(environment: JavaVirtualMachine.shared().environment()).fromString(\(inner).uuidString)"
+
+    case .fromJavaUUID(let inner):
+      let inner = inner.render(&printer, placeholder)
+      return "UUID(uuidString: \(inner).toString())!"
 
     case .toJavaOptional(let inner):
       let inner = inner.render(&printer, placeholder)

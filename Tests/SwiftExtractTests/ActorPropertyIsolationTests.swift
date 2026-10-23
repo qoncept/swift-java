@@ -65,6 +65,47 @@ struct ActorPropertyIsolationTests {
     }
   }
 
+  @Test(arguments: ["AnyObject", "Swift.AnyObject", "Sendable", "Swift.Sendable", "AnyObject, Swift.Sendable"])
+  func standardConstraintsPreserveSynchronousWitness(_ inheritance: String) throws {
+    let source = """
+      public protocol Identified: \(inheritance) { var identifier: Int64 { get } }
+      public actor Record: Identified { public let identifier: Int64 }
+      """
+    let result = try analyze(sources: [("/fake/Source.swift", source)], moduleName: "Test")
+    let record = try #require(result.extractedTypes.values.first { $0.swiftNominal.name == "Record" })
+    let accessor = try #require(record.variables.first { $0.name == "identifier" })
+    #expect(accessor.functionSignature.nonisolatedWitnessProtocol?.asNominalTypeDeclaration?.name == "Identified")
+    #expect(!accessor.functionSignature.isImplicitlyAsync)
+  }
+
+  @Test
+  func inheritedStandardConstraintsPreserveSynchronousWitness() throws {
+    let source = """
+      public protocol Identified: AnyObject, Sendable { var identifier: Int64 { get } }
+      public protocol InheritedIdentifier: Identified {}
+      public actor Record: InheritedIdentifier { public let identifier: Int64 }
+      """
+    let result = try analyze(sources: [("/fake/Source.swift", source)], moduleName: "Test")
+    let record = try #require(result.extractedTypes.values.first { $0.swiftNominal.name == "Record" })
+    let accessor = try #require(record.variables.first { $0.name == "identifier" })
+    #expect(accessor.functionSignature.nonisolatedWitnessProtocol?.asNominalTypeDeclaration?.name == "InheritedIdentifier")
+    #expect(!accessor.functionSignature.isImplicitlyAsync)
+  }
+
+  @Test
+  func localSendableDoesNotBypassIsolation() throws {
+    let source = """
+      @MainActor public protocol Sendable {}
+      public protocol Identified: Sendable { var identifier: Int64 { get } }
+      public actor Record: Identified { public let identifier: Int64 }
+      """
+    let result = try analyze(sources: [("/fake/Source.swift", source)], moduleName: "Test")
+    let record = try #require(result.extractedTypes.values.first { $0.swiftNominal.name == "Record" })
+    let accessor = try #require(record.variables.first { $0.name == "identifier" })
+    #expect(accessor.functionSignature.nonisolatedWitnessProtocol == nil)
+    #expect(accessor.functionSignature.isImplicitlyAsync)
+  }
+
   private func record() throws -> ExtractedNominalType {
     let result = try analyze(sources: [("/fake/Source.swift", Self.source)], moduleName: "Test")
     return try #require(result.extractedTypes.values.first { $0.swiftNominal.name == "Record" })

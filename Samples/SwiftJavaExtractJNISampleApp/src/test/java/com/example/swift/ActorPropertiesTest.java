@@ -23,6 +23,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class ActorPropertiesTest {
     @Test
+    void standardProtocolConstraintsKeepWitnessesSynchronous() {
+        try (var arena = SwiftArena.ofConfined()) {
+            SendableIdentifiedActor actor = SendableIdentifiedActor.init(42, arena);
+            long identifier = actor.getIdentifier();
+            assertEquals(42, identifier);
+        }
+    }
+
+    @Test
     void nonisolatedPropertiesStaySynchronous() {
         try (var arena = SwiftArena.ofConfined()) {
             IdentifiedActor actor = IdentifiedActor.init(42, arena);

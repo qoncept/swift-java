@@ -449,7 +449,15 @@ extension SwiftFunctionSignature {
       else { return false }
       if !visited.insert(declaration.identity).inserted { return true }
       return (declaration.inheritanceTypes ?? []).allSatisfy { inherited in
-        guard let type = try? SwiftType(inherited.type, lookupContext: lookupContext) else { return false }
+        let type = try? SwiftType(inherited.type, lookupContext: lookupContext)
+        // These standard constraints do not introduce actor isolation and are
+        // absent from SwiftExtract's built-in Swift symbol table.
+        if ["AnyObject", "Swift.AnyObject", "Sendable", "Swift.Sendable"].contains(inherited.type.trimmedDescription),
+          type == nil || type?.asNominalTypeDeclaration?.moduleName == "Swift"
+        {
+          return true
+        }
+        guard let type else { return false }
         return isNonisolatedProtocol(type, visited: &visited)
       }
     }

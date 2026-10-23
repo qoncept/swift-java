@@ -64,4 +64,26 @@ struct JNIActorPropertyTests {
       ]
     )
   }
+
+  @Test(arguments: ["AnyObject", "Swift.AnyObject", "Sendable", "Swift.Sendable", "AnyObject, Swift.Sendable"])
+  func standardConstraintsPreserveSynchronousBindings(_ inheritance: String) throws {
+    let source = """
+      public protocol Identified: \(inheritance) { var identifier: Int64 { get } }
+      public actor Record: Identified { public let identifier: Int64 }
+      """
+    try assertOutput(
+      input: source,
+      .jni,
+      .java,
+      expectedChunks: ["public long getIdentifier() {"],
+      notExpectedChunks: ["public java.util.concurrent.CompletableFuture<java.lang.Long> getIdentifier() {"]
+    )
+    try assertOutput(
+      input: source,
+      .jni,
+      .swift,
+      expectedChunks: ["return (selfPointer$.pointee as any Identified).identifier.getJNILocalRefValue(in: environment)"],
+      notExpectedChunks: ["await selfPointer$.pointee.identifier"]
+    )
+  }
 }

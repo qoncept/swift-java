@@ -27,3 +27,15 @@ public actor IdentifiedActor: ActorIdentifier {
     self.unwitnessed = identifier + 1
   }
 }
+
+public protocol SendableActorIdentifier: AnyObject, Sendable {
+  var identifier: Int64 { get }
+}
+
+public actor SendableIdentifiedActor: SendableActorIdentifier {
+  public let identifier: Int64
+
+  public init(identifier: Int64) {
+    self.identifier = identifier
+  }
+}

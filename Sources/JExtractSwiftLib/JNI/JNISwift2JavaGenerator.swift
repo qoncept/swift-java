@@ -74,6 +74,7 @@ package class JNISwift2JavaGenerator: Swift2JavaGenerator {
   /// Since Swift files in SwiftPM builds needs to be unique, we use this fact to flatten paths into plain names here.
   /// For uniqueness checking "did we write this file already", just checking the name should be sufficient.
   var expectedOutputSwiftFileNames: Set<String>
+  var protocolDefaultMethodsCache: [ExtractedNominalType: [ProtocolDefaultMethod]] = [:]
 
   package init(
     config: Configuration,

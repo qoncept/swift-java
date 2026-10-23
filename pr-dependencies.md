@@ -33,8 +33,10 @@ flowchart LR
 
     PROTOCOL_NAMES["qoncept/swift-java#3<br/>Consistent inherited requirement names<br/>Upstream PR pending"]
     PROTOCOL_DEFAULTS["qoncept/swift-java#11<br/>Java bridges for Swift protocol defaults<br/>Upstream PR pending"]
+    ACTOR_CONSTRAINTS["qoncept/swift-java#14<br/>Standard constraints on actor witnesses<br/>Upstream PR pending"]
     PROTOCOL_EXT -->|"requires requirement classification"| PROTOCOL_NAMES
     PROTOCOL_NAMES -->|"requires naming and fixtures"| PROTOCOL_DEFAULTS
+    ACTOR_PROPERTIES -->|"extends witness discovery"| ACTOR_CONSTRAINTS
 ```
 
 ## Origin tracking and upstream PRs
@@ -54,7 +56,7 @@ dependencies to the graph.
 | [#9](https://github.com/qoncept/swift-java/pull/9) | `PROTOCOL_ADAPTERS` | Reuse identical protocol-parameter adapters across overloaded initializers, methods, and free functions. | Not opened | `codex/fix-jni-protocol-parameter-overloads` | [`e133956`](https://github.com/qoncept/swift-java/commit/e1339562fa18c0364f68a67199e9374670180ca2) |
 | [#10](https://github.com/qoncept/swift-java/pull/10) | `ASYNC_CANCEL` | Forward cancellation through generated result conversion to the Swift task, preserving legacy Future behavior. | Not opened | `codex/fix-jni-async-cancellation` | [`8c2c819`](https://github.com/qoncept/swift-java/commit/8c2c819aa6dd3196f4a62b4620a5a0233d991604) |
 | [#11](https://github.com/qoncept/swift-java/pull/11) | `PROTOCOL_DEFAULTS` | Bridge supported Swift requirement defaults to Java interface default methods, including refinements and nested protocols. | Not opened | `codex/bridge-jni-protocol-default-methods` | [`08f9082`](https://github.com/qoncept/swift-java/commit/08f908272438d9d6e3e63a8421197bdd0fe6071b) |
-
+| [#14](https://github.com/qoncept/swift-java/pull/14) | `ACTOR_CONSTRAINTS` | Preserve synchronous actor-property witnesses when protocols inherit standard `AnyObject` or `Sendable` constraints, including `Swift.`-qualified spellings. | Not opened | `codex/fix-actor-property-standard-constraints` | [`e5d844f`](https://github.com/qoncept/swift-java/commit/e5d844ffe43cfc83e5e809e44f01758c95c16373) |
 
 ### Generated-output follow-ups
 
@@ -94,6 +96,14 @@ fix's upstream submission; it does not add a dependency between origins #5 and #
   `SwiftFunctionSignature.nonisolatedWitnessProtocol` and reads actor properties
   through that protocol. It uses neither the new protocol-requirement classifier
   nor the `MAIN_ACTOR` thunk changes.
+- **`ACTOR_PROPERTIES` → `ACTOR_CONSTRAINTS`:** origin #14 extends the
+  `synchronousPropertyWitness` / `isNonisolatedProtocol` discovery introduced by
+  origin #4. It recognizes standard `AnyObject` and `Sendable` constraints,
+  including their `Swift.`-qualified spellings, without bypassing isolation on
+  locally declared protocols with the same names. Its extraction, generator,
+  and runtime regressions extend the actor-property fixtures from origin #4.
+  Origin #14 requires origin #4, but not `MAIN_ACTOR`, the protocol naming/default
+  chain, or any other independent fix.
 - **`FOUNDATION` is independent:** it extends the existing callback conversions
   and adds the `JavaUtilUUID` runtime projection. It does not require protocol
   extension filtering, requirement-name changes, or either isolation fix.
@@ -135,6 +145,8 @@ commits above. Each check starts with a temporary Git index containing upstream
 | #11 | None | Does not apply |
 | #11 | #2 only | Does not apply; the naming regression fixtures from #3 are absent |
 | #11 | #2, then #3 | Pass |
+| #14 | None | Does not apply; witness discovery and actor-property fixtures from #4 are absent |
+| #14 | #4 | Pass |
 
 Patch applicability supports the source analysis; shared context alone does not
 create a semantic prerequisite. These checks are not a substitute for compiling
@@ -151,12 +163,18 @@ Swift and Java tests after adapting each patch to its eventual upstream base.
    for #938 or for one another. Prioritize origin #2 to unblock the protocol
    naming/default chain; there is no required order among the other independent
    submissions. Include the matching generated-output follow-ups from origin
-   #13 with origins #5 and #8, as described above.
-2. **Requirement naming:** submit `PROTOCOL_NAMES` (origin #3) after the
-   upstream equivalent of origin #2 merges.
+   #13 with origins #5 and #8, as described above. Since origin #4 has not been
+   submitted upstream, prefer including origin #14's `e5d844f` and its regressions
+   in the same `ACTOR_PROPERTIES` submission. This combined #4 + #14 patch needs
+   no other prerequisite.
+2. **Dependent follow-ups:** submit `PROTOCOL_NAMES` (origin #3) after the
+   upstream equivalent of origin #2 merges. If `ACTOR_CONSTRAINTS` (origin #14)
+   is submitted separately rather than included with #4, submit it after the
+   upstream equivalent of origin #4 merges. These two chains can progress
+   independently.
 3. **Protocol defaults:** submit `PROTOCOL_DEFAULTS` (origin #11) after the
    upstream equivalent of origin #3 merges. Origin #2 must already be present
-   transitively. Origin #11 need not wait for origins #4, #5, or #7–#10.
+   transitively. Origin #11 need not wait for origins #4, #5, #7–#10, or #14.
 
 If review should begin before prerequisites merge, submit the protocol work as
 an explicit stack: origin #2's upstream equivalent targets `main`, origin #3's
@@ -165,6 +183,11 @@ upstream equivalent targets the #3 implementation branch. Keep each PR's diff
 limited to its own change. After each prerequisite merges upstream, rebase the
 next dependent branch onto upstream `main`, retarget its PR, and recheck the diff
 and tests. A merge in `qoncept/swift-java` does not satisfy an upstream prerequisite.
+
+If #14 is kept separate and reviewed before #4 merges upstream, use the same
+stacking approach: #4's upstream equivalent targets `main`, and #14's upstream
+equivalent targets the #4 implementation branch until it can be rebased and
+retargeted to upstream `main`.
 
 Shared files and merge conflicts may require rebasing; they do not by themselves
 create a prerequisite. When adding a fix, record its origin PR, corresponding

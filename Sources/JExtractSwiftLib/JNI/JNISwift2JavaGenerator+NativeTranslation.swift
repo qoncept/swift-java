@@ -2064,6 +2064,10 @@ extension JNISwift2JavaGenerator {
           }
         }
 
+        if completeMethodID == "_JNIMethodIDCache.CompletableFuture.complete" {
+          printer.print("SwiftJavaRuntimeSupport._JNIAsyncTask.bind(task!, to: result_future, in: environment)")
+        }
+
         return ""
 
       case .closure(let args, let body):

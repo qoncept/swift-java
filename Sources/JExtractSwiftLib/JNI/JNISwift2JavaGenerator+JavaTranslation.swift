@@ -704,7 +704,7 @@ extension JNISwift2JavaGenerator {
 
       switch mode {
       case .completableFuture:
-        nativeFutureType = .completableFuture(nativeFunctionSignature.result.javaType)
+        nativeFutureType = .class(package: "org.swift.swiftkit.core", name: "SwiftCompletableFuture", typeParameters: [nativeFunctionSignature.result.javaType.boxedType])
         translatedFutureType = .completableFuture(translatedFunctionSignature.result.javaType)
         completeMethodID = "_JNIMethodIDCache.CompletableFuture.complete"
         completeExceptionallyMethodID = "_JNIMethodIDCache.CompletableFuture.completeExceptionally"
@@ -730,7 +730,7 @@ extension JNISwift2JavaGenerator {
         outParameters: result.outParameters + [futureOutParameter],
         conversion: .method(
           .constant("future$"),
-          function: "thenApply",
+          function: mode == .completableFuture ? "mapSwiftResult" : "thenApply",
           arguments: [
             .lambda(
               args: ["futureResult$"],

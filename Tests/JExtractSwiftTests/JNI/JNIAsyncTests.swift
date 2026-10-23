@@ -35,16 +35,16 @@ struct JNIAsyncTests {
          * }
          */
         public static java.util.concurrent.CompletableFuture<java.lang.Void> asyncVoid() {
-          java.util.concurrent.CompletableFuture<java.lang.Void> future$ = new java.util.concurrent.CompletableFuture<java.lang.Void>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void>();
           SwiftModule.$asyncVoid(future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $asyncVoid(java.util.concurrent.CompletableFuture<java.lang.Void> result_future);
+        private static native void $asyncVoid(org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> result_future);
         """,
       ]
     )
@@ -59,8 +59,8 @@ struct JNIAsyncTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_SwiftModule__00024asyncVoid__Ljava_util_concurrent_CompletableFuture_2")
-        public func Java_com_example_swift_SwiftModule__00024asyncVoid__Ljava_util_concurrent_CompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, result_future: jobject?) {
+        @_cdecl("Java_com_example_swift_SwiftModule__00024asyncVoid__Lorg_swift_swiftkit_core_SwiftCompletableFuture_2")
+        public func Java_com_example_swift_SwiftModule__00024asyncVoid__Lorg_swift_swiftkit_core_SwiftCompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, result_future: jobject?) {
           nonisolated(unsafe) let globalFuture = environment.interface.NewGlobalRef(environment, result_future)
           var task: Task<Void, Never>? = nil
           #if swift(>=6.2)
@@ -89,6 +89,7 @@ struct JNIAsyncTests {
               _ = environment.interface.CallBooleanMethodA(environment, globalFuture, _JNIMethodIDCache.CompletableFuture.complete, [jvalue(l: nil)])
             }
           }
+          SwiftJavaRuntimeSupport._JNIAsyncTask.bind(task!, to: result_future, in: environment)
         }
         """
       ]
@@ -111,16 +112,16 @@ struct JNIAsyncTests {
          * }
          */
         public static java.util.concurrent.CompletableFuture<java.lang.Void> async() {
-          java.util.concurrent.CompletableFuture<java.lang.Void> future$ = new java.util.concurrent.CompletableFuture<java.lang.Void>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void>();
           SwiftModule.$async(future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $async(java.util.concurrent.CompletableFuture<java.lang.Void> result_future);
+        private static native void $async(org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Void> result_future);
         """,
       ]
     )
@@ -135,8 +136,8 @@ struct JNIAsyncTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_SwiftModule__00024async__Ljava_util_concurrent_CompletableFuture_2")
-        public func Java_com_example_swift_SwiftModule__00024async__Ljava_util_concurrent_CompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, result_future: jobject?) {
+        @_cdecl("Java_com_example_swift_SwiftModule__00024async__Lorg_swift_swiftkit_core_SwiftCompletableFuture_2")
+        public func Java_com_example_swift_SwiftModule__00024async__Lorg_swift_swiftkit_core_SwiftCompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, result_future: jobject?) {
           nonisolated(unsafe) let globalFuture = environment.interface.NewGlobalRef(environment, result_future)
           var task: Task<Void, Never>? = nil
           #if swift(>=6.2)
@@ -179,6 +180,7 @@ struct JNIAsyncTests {
               }
             }
           }
+          SwiftJavaRuntimeSupport._JNIAsyncTask.bind(task!, to: result_future, in: environment)
         }
         """
       ]
@@ -201,16 +203,16 @@ struct JNIAsyncTests {
          * }
          */
         public static java.util.concurrent.CompletableFuture<java.lang.Long> async(long i) {
-          java.util.concurrent.CompletableFuture<java.lang.Long> future$ = new java.util.concurrent.CompletableFuture<java.lang.Long>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Long> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Long>();
           SwiftModule.$async(i, future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $async(long i, java.util.concurrent.CompletableFuture<java.lang.Long> result_future);
+        private static native void $async(long i, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Long> result_future);
         """,
       ]
     )
@@ -225,8 +227,8 @@ struct JNIAsyncTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_SwiftModule__00024async__JLjava_util_concurrent_CompletableFuture_2")
-        public func Java_com_example_swift_SwiftModule__00024async__JLjava_util_concurrent_CompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, i: jlong, result_future: jobject?) {
+        @_cdecl("Java_com_example_swift_SwiftModule__00024async__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2")
+        public func Java_com_example_swift_SwiftModule__00024async__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, i: jlong, result_future: jobject?) {
           nonisolated(unsafe) let globalFuture = environment.interface.NewGlobalRef(environment, result_future)
           var task: Task<Void, Never>? = nil
           #if swift(>=6.2)
@@ -257,6 +259,7 @@ struct JNIAsyncTests {
               _ = environment.interface.CallBooleanMethodA(environment, globalFuture, _JNIMethodIDCache.CompletableFuture.complete, [jvalue(l: boxedResult$)])
             }
           }
+          SwiftJavaRuntimeSupport._JNIAsyncTask.bind(task!, to: result_future, in: environment)
           return
         }
         """
@@ -284,16 +287,16 @@ struct JNIAsyncTests {
          * }
          */
         public static java.util.concurrent.CompletableFuture<MyClass> async(MyClass c, SwiftArena swiftArena) {
-          java.util.concurrent.CompletableFuture<java.lang.Long> future$ = new java.util.concurrent.CompletableFuture<java.lang.Long>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Long> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Long>();
           SwiftModule.$async(c.$memoryAddress(), future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return MyClass.wrapMemoryAddressUnsafe(futureResult$, swiftArena);
           }
           );
         }
         """,
         """
-        private static native void $async(long c, java.util.concurrent.CompletableFuture<java.lang.Long> result_future);
+        private static native void $async(long c, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.Long> result_future);
         """,
       ]
     )
@@ -312,8 +315,8 @@ struct JNIAsyncTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_SwiftModule__00024async__JLjava_util_concurrent_CompletableFuture_2")
-        public func Java_com_example_swift_SwiftModule__00024async__JLjava_util_concurrent_CompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, c: jlong, result_future: jobject?) {
+        @_cdecl("Java_com_example_swift_SwiftModule__00024async__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2")
+        public func Java_com_example_swift_SwiftModule__00024async__JLorg_swift_swiftkit_core_SwiftCompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, c: jlong, result_future: jobject?) {
           assert(c != 0, "c memory address was null")
           let cBits$ = Int(Int64(fromJNI: c, in: environment))
           let c$ = UnsafeMutablePointer<MyClass>(bitPattern: cBits$)
@@ -356,6 +359,7 @@ struct JNIAsyncTests {
               _ = environment.interface.CallBooleanMethodA(environment, globalFuture, _JNIMethodIDCache.CompletableFuture.complete, [jvalue(l: boxedResult$)])
             }
           }
+          SwiftJavaRuntimeSupport._JNIAsyncTask.bind(task!, to: result_future, in: environment)
           return
         }
         """
@@ -375,16 +379,16 @@ struct JNIAsyncTests {
       expectedChunks: [
         """
         public static java.util.concurrent.CompletableFuture<java.lang.String> async(java.lang.String s) {
-          java.util.concurrent.CompletableFuture<java.lang.String> future$ = new java.util.concurrent.CompletableFuture<java.lang.String>();
+          org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.String> future$ = new org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.String>();
           SwiftModule.$async(s, future$);
-          return future$.thenApply((futureResult$) -> {
+          return future$.mapSwiftResult((futureResult$) -> {
             return futureResult$;
           }
           );
         }
         """,
         """
-        private static native void $async(java.lang.String s, java.util.concurrent.CompletableFuture<java.lang.String> result_future);
+        private static native void $async(java.lang.String s, org.swift.swiftkit.core.SwiftCompletableFuture<java.lang.String> result_future);
         """,
       ]
     )
@@ -401,8 +405,8 @@ struct JNIAsyncTests {
       detectChunkByInitialLines: 1,
       expectedChunks: [
         """
-        @_cdecl("Java_com_example_swift_SwiftModule__00024async__Ljava_lang_String_2Ljava_util_concurrent_CompletableFuture_2")
-        public func Java_com_example_swift_SwiftModule__00024async__Ljava_lang_String_2Ljava_util_concurrent_CompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, s: jstring?, result_future: jobject?) {
+        @_cdecl("Java_com_example_swift_SwiftModule__00024async__Ljava_lang_String_2Lorg_swift_swiftkit_core_SwiftCompletableFuture_2")
+        public func Java_com_example_swift_SwiftModule__00024async__Ljava_lang_String_2Lorg_swift_swiftkit_core_SwiftCompletableFuture_2(environment: UnsafeMutablePointer<JNIEnv?>!, thisClass: jclass, s: jstring?, result_future: jobject?) {
           nonisolated(unsafe) let s = environment.interface.NewGlobalRef(environment, s)
           nonisolated(unsafe) let globalFuture = environment.interface.NewGlobalRef(environment, result_future)
           ...

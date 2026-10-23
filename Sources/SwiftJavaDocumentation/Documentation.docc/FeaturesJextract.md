@@ -243,6 +243,19 @@ There are two modes of extracting them, configurable using the `asyncFuncMode` s
    }
 }
 
+#### Cancelling JNI async calls
+
+In `completableFuture` mode, cancelling the future returned by a JNI async call
+also cancels its Swift task, including when the generated bridge converts the
+result. Swift cancellation is cooperative: the operation must check cancellation
+or use a cancellation-aware suspension such as `Task.sleep`. Cancellation does
+not interrupt an operating-system thread or wait for the Swift task to finish.
+The `mayInterruptIfRunning` argument does not change this behavior.
+
+This forwarding applies to the future returned by the generated API. Additional
+Java future stages created by callers follow the usual `CompletableFuture`
+cancellation rules. The `legacyFuture` mode keeps its existing behavior.
+
 #### Asynchronous functions and Kotlin async/await
 
 Because Kotlin offers extension `suspending fun` methods on Future types, it is possible to `.await()`

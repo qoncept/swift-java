@@ -31,7 +31,7 @@ struct JNIProtocolRequirementNamesTests {
       config: config,
       .jni,
       .java,
-      expectedChunks: ["public java.lang.String message();", "public java.lang.String message() {"],
+      expectedChunks: ["public default java.lang.String message() {", "public java.lang.String message() {"],
       notExpectedChunks: ["message_()"]
     )
   }

@@ -439,7 +439,7 @@ struct JNIProtocolTests {
         """
         extension SwiftJavaChildProtocolWrapper {
           var _javaParentProtocolInterface: JavaParentProtocol {
-            _javaChildProtocolInterface
+            JavaParentProtocol(javaHolder: _javaChildProtocolInterface.javaHolder)
           }
           public func childMethod() {
             ...

@@ -194,12 +194,30 @@ extension JNISwift2JavaGenerator {
     try printer.printBraceBlock("extension \(translatedWrapper.wrapperName)") { printer in
       for inherited in inheritedWrappers {
         printer.printBraceBlock("var \(inherited.javaInterfaceVariableName): \(inherited.javaInterfaceName)") { printer in
-          printer.print("\(translatedWrapper.javaInterfaceVariableName)")
+          printer.print("\(inherited.javaInterfaceName)(javaHolder: \(translatedWrapper.javaInterfaceVariableName).javaHolder)")
         }
         printer.println()
       }
 
       for function in translatedWrapper.functions {
+        try printInterfaceWrapperFunctionImpl(&printer, function, inside: translatedWrapper)
+        printer.println()
+      }
+
+      // A refinement default competes with the parent callback wrapper's witness.
+      // Emit an explicit forwarding witness on this more specific wrapper so
+      // calls still reach the original Java receiver.
+      for method in protocolDefaultMethods(of: translatedWrapper.importedType) {
+        let signature = method.requirement.functionSignature
+        if translatedWrapper.functions.contains(where: { $0.originalFunctionSignature == signature }) {
+          continue
+        }
+        guard let parent = method.requirement.parentType,
+          let declaringType = asExtractedNominalTypeDecl(parent),
+          let function = interfaceProtocolWrappers[declaringType]?.functions.first(where: {
+            $0.originalFunctionSignature == signature
+          })
+        else { continue }
         try printInterfaceWrapperFunctionImpl(&printer, function, inside: translatedWrapper)
         printer.println()
       }
@@ -218,7 +236,7 @@ extension JNISwift2JavaGenerator {
     inside wrapper: JavaInterfaceSwiftWrapper,
   ) throws {
     guard
-      let protocolMethod = wrapper.importedType.methods.first(where: {
+      let protocolMethod = allProtocolRequirementMethods(of: wrapper.importedType).first(where: {
         $0.functionSignature == function.originalFunctionSignature
       })
     else {
@@ -249,7 +267,9 @@ extension JNISwift2JavaGenerator {
           function.parameterConversions,
         ).map { param, conversion in
           // Wrap-java does not extract parameter names, so no labels
-          conversion.render(&printer, param.parameterName!)
+          let converted = conversion.render(&printer, param.parameterName!)
+          // Java long is projected by wrap-java as Int64, including Swift Int.
+          return param.type.asNominalType?.asKnownType == .int ? "Int64(\(converted))" : converted
         }
 
         // If the underlying translated method requires
@@ -258,11 +278,12 @@ extension JNISwift2JavaGenerator {
           upcallArguments.append("JavaSwiftArena.defaultAutoArena")
         }
 
-        let tryClause = function.originalFunctionSignature.isThrowing ? "try " : ""
+        let tryClause = translatedDecl.throwsClause().isEmpty ? "" : "try "
         let javaUpcall =
           "\(tryClause)\(wrapper.javaInterfaceVariableName).\(function.swiftFunctionName)(\(upcallArguments.joined(separator: .comma)))"
 
-        let result = function.resultConversion.render(&printer, javaUpcall)
+        let converted = function.resultConversion.render(&printer, javaUpcall)
+        let result = resultType.asNominalType?.asKnownType == .int ? "Int(\(converted))" : converted
         printer.print("\(returnStmt)\(result)")
       }
     }
@@ -379,6 +400,36 @@ extension JNISwift2JavaGenerator {
   private func printProtocolThunks(_ printer: inout SwiftPrinter, _ type: ExtractedNominalType) throws {
     if let protocolWrapper = self.interfaceProtocolWrappers[type] {
       try printSwiftInterfaceWrapper(&printer, protocolWrapper)
+    }
+
+    for method in protocolDefaultMethods(of: type) {
+      // Omit exactly this requirement. Swift then selects its extension default;
+      // all other requirements still dispatch to the original receiver, including
+      // Java overrides of other default methods. Calling the original witness
+      // directly here would recurse through the Java interface default method.
+      printer.printBraceBlock("private final class \(method.adapterName): \(type.effectiveSwiftTypeName)") { printer in
+        printer.print("let base: any \(type.effectiveSwiftTypeName)")
+        printer.printBraceBlock("init(base: any \(type.effectiveSwiftTypeName))") { printer in
+          printer.print("self.base = base")
+        }
+        for forwarded in allProtocolRequirementMethods(of: type)
+        where !sameProtocolSignature(forwarded, method.requirement) {
+          let parameters = protocolDefaultParameters(forwarded).map(\.description).joined(separator: ", ")
+          let result = forwarded.functionSignature.result.type
+          printer.printBraceBlock("func `\(forwarded.name)`(\(parameters))\(protocolDefaultEffects(forwarded)) -> \(result)") { printer in
+            let prefix = (result.isVoid ? "" : "return ") + (forwarded.isThrowing ? "try " : "")
+            printer.print("\(prefix)base.`\(forwarded.name)`(\(protocolDefaultArguments(forwarded)))")
+          }
+        }
+      }
+      let parameters = method.helper.functionSignature.parameters.map(\.description).joined(separator: ", ")
+      let result = method.helper.functionSignature.result.type
+      printer.printBraceBlock("private func \(method.helper.name)(\(parameters))\(protocolDefaultEffects(method.helper)) -> \(result)") { printer in
+        printer.print("let value = \(method.adapterName)(base: receiver)")
+        let prefix = (result.isVoid ? "" : "return ") + (method.requirement.isThrowing ? "try " : "")
+        printer.print("\(prefix)value.`\(method.requirement.name)`(\(protocolDefaultArguments(method.requirement)))")
+      }
+      printSwiftFunctionThunk(&printer, method.helper)
     }
 
     // Independent of `interfaceProtocolWrappers`/`enableJavaCallbacks` — this
@@ -1315,7 +1366,7 @@ extension SwiftNominalTypeDeclaration {
 
   /// The name of the corresponding `@JavaInterface` of this type.
   var javaInterfaceName: String {
-    "Java\(safeProtocolName)"
+    "Java\(qualifiedName)"
   }
 
   var javaInterfaceSwiftProtocolWrapperName: String {
@@ -1323,7 +1374,7 @@ extension SwiftNominalTypeDeclaration {
   }
 
   var javaInterfaceVariableName: String {
-    "_\(javaInterfaceName.firstCharacterLowercased)Interface"
+    "_java\(safeProtocolName)Interface"
   }
 
   /// The name of the generated Java class that boxes a value returned as

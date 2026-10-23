@@ -21,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class ProtocolRequirementNamesTest {
     @Test
     void javaCallbackOverridesTheDefaultImplementation() {
-        NamingCallback callback = () -> "Java";
+        NamingCallback callback = new NamingCallback() {
+            public String message() { return "Java"; }
+        };
         assertEquals("Java", MySwiftLibrary.callNamingCallback(callback));
     }
 

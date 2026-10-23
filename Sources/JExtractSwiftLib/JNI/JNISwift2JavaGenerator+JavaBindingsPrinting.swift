@@ -189,7 +189,7 @@ extension JNISwift2JavaGenerator {
   }
 
   private func printProtocol(_ printer: inout JavaPrinter, _ decl: ExtractedNominalType) {
-    var extends = self.inheritedProtocols(of: decl).map(\.effectiveJavaSimpleName)
+    var extends = self.inheritedProtocols(of: decl).map(\.effectiveJavaName)
 
     // If we cannot generate Swift wrappers
     // that allows the user to implement the wrapped interface in Java
@@ -210,9 +210,50 @@ extension JNISwift2JavaGenerator {
       // (`supportedProtocolRequirements(of:)`) so the interface never
       // declares a requirement (e.g. a property setter) that the box
       // doesn't implement.
-      for requirement in self.supportedProtocolRequirements(of: decl) {
-        printFunctionDowncallMethods(&printer, requirement, skipMethodBody: true)
+      let defaults = protocolDefaultMethods(of: decl)
+      var requirements = self.supportedProtocolRequirements(of: decl)
+      // A refined protocol may supply a default for an inherited requirement.
+      for method in defaults where !requirements.contains(where: { sameProtocolSignature($0, method.requirement) }) {
+        requirements.append(method.requirement)
+      }
+      for requirement in requirements {
+        if let method = defaults.first(where: { sameProtocolSignature($0.requirement, requirement) }),
+          let target = translatedDecl(for: method.helper), let original = translatedDecl(for: requirement)
+        {
+          printJavaBindingWrapperMethod(
+            &printer,
+            original,
+            importedFunc: requirement,
+            skipMethodBody: false,
+            protocolDefaultTarget: target
+          )
+        } else {
+          printFunctionDowncallMethods(&printer, requirement, skipMethodBody: true)
+        }
         printer.println()
+      }
+    }
+
+    let defaults = protocolDefaultMethods(of: decl)
+    if !defaults.isEmpty {
+      // Java interfaces cannot declare native methods. Keep the native entry
+      // points in a package-private companion, initialized on first default call.
+      printer.println()
+      let staticModifier = decl.parent == nil ? "" : "static "
+      printer.printBraceBlock("\(staticModifier)final class \(decl.effectiveJavaSimpleName)$SwiftDefaults") { printer in
+        printer.printBraceBlock("static") { printer in
+          if let loading = config.overrideStaticBlockLibraryLoading {
+            for line in loading { printer.print(line) }
+          } else {
+            printer.print("SwiftLibraries.loadLibraryWithFallbacks(SwiftLibraries.LIB_NAME_SWIFT_JAVA);")
+            printer.print("SwiftLibraries.loadLibraryWithFallbacks(\"\(config.nativeLibraryName ?? swiftModuleName)\");")
+          }
+        }
+        for method in defaults {
+          if let translated = translatedDecl(for: method.helper) {
+            printJavaBindingWrapperMethod(&printer, translated, skipMethodBody: false)
+          }
+        }
       }
     }
   }
@@ -241,7 +282,7 @@ extension JNISwift2JavaGenerator {
   /// (dynamic) value pointer and the concrete (dynamic) type-metadata pointer.
   private func printExistentialBox(_ printer: inout JavaPrinter, _ decl: ExtractedNominalType) {
     let boxName = decl.swiftNominal.javaExistentialBoxName
-    let implementsClause = "JNISwiftInstance, \(decl.effectiveJavaSimpleName)"
+    let implementsClause = "JNISwiftInstance, \(decl.effectiveJavaName)"
 
     printer.printBraceBlock("final class \(boxName) implements \(implementsClause)") { printer in
       printDesignatedConstructor(&printer, javaName: boxName, pointerParams: ["selfPointer", "selfTypePointer"])
@@ -353,8 +394,19 @@ extension JNISwift2JavaGenerator {
         type.parent == decl.swiftNominal
       }
 
-      for nestedType in nestedTypes {
-        printConcreteType(&printer, nestedType.value)
+      for (_, nestedType) in nestedTypes.sorted(by: { $0.key < $1.key }) {
+        let identifiers = currentJavaIdentifiers
+        resetForNewOutputFile(
+          nestedType.swiftNominal.kind == .protocol
+            ? allProtocolRequirementMethods(of: nestedType)
+            : nestedType.initializers + nestedType.variables + nestedType.methods
+        )
+        if nestedType.swiftNominal.kind == .protocol {
+          printProtocol(&printer, nestedType)
+        } else {
+          printConcreteType(&printer, nestedType)
+        }
+        currentJavaIdentifiers = identifiers
         printer.println()
       }
 
@@ -880,8 +932,10 @@ extension JNISwift2JavaGenerator {
     _ translatedDecl: TranslatedFunctionDecl,
     importedFunc: ExtractedFunc? = nil,
     skipMethodBody: Bool,
+    protocolDefaultTarget: TranslatedFunctionDecl? = nil,
   ) {
     var modifiers = ["public"]
+    if protocolDefaultTarget != nil { modifiers.append("default") }
     if translatedDecl.isStatic {
       modifiers.append("static")
     }
@@ -931,7 +985,7 @@ extension JNISwift2JavaGenerator {
       var modifiers = modifiers
 
       // If we are a protocol, we emit this as default method
-      if isParentProtocol {
+      if isParentProtocol && !modifiers.contains("default") {
         modifiers.insert("default", at: 1)
       }
 
@@ -967,10 +1021,17 @@ extension JNISwift2JavaGenerator {
       printer.print("\(signature);")
     } else {
       printer.printBraceBlock(signature) { printer in
-        printDowncall(&printer, translatedDecl)
+        if let target = protocolDefaultTarget {
+          var arguments = ["this"] + translatedSignature.parameters.map(\.parameter.name)
+          if translatedSignature.requiresSwiftArena { arguments.append("swiftArena") }
+          let call = "\(target.parentName).\(target.name)(\(arguments.joined(separator: .comma)))"
+          printer.print((resultType.isVoid ? "" : "return ") + call + ";")
+        } else {
+          printDowncall(&printer, translatedDecl)
+        }
       }
 
-      printNativeFunction(&printer, translatedDecl)
+      if protocolDefaultTarget == nil { printNativeFunction(&printer, translatedDecl) }
     }
   }
 

@@ -568,6 +568,21 @@ initializers declared in protocol extensions retain their Swift implementations;
 they do not add requirements to the Java interface or prevent an otherwise
 supported protocol from being implemented in Java.
 
+When Java callbacks are enabled, an unconditional extension implementation of a
+supported synchronous instance-method requirement is exposed as a Java interface
+`default` method. Java implementations can inherit that Swift implementation or
+override it. Calls from a Swift default to other requirements continue to dispatch
+to the original Java receiver, including its overrides of other default methods.
+Refined protocols can provide defaults for inherited requirements, and nested
+protocols retain their qualified Java names.
+
+These bridges require a callback-compatible protocol whose requirements are
+synchronous, nonisolated, nongeneric instance methods. Attributed declarations (including global-actor isolation), conditional extension
+implementations, property requirements, and extension-only convenience members do
+not acquire default bridges. A protocol whose every abstract method becomes a
+default is no longer a Java functional interface; implement it with an anonymous
+class rather than a lambda.
+
 > Note: `any DataProtocol` is handled as `Foundation.Data` in FFM mode; see below.
 
 @TabNavigator {

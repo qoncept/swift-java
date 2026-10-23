@@ -105,23 +105,26 @@ extension JNISwift2JavaGenerator {
 
   struct JavaInterfaceProtocolWrapperGenerator {
     func generate(for type: ExtractedNominalType) throws -> JavaInterfaceSwiftWrapper {
-      if !type.initializers.isEmpty
-        || type.methods.contains(where: \.isStatic)
-        || type.variables.contains(where: \.isStatic)
+      let methods = type.methods.filter(\.isProtocolRequirement)
+      let variableAccessors = type.variables.filter(\.isProtocolRequirement)
+
+      if type.initializers.contains(where: \.isProtocolRequirement)
+        || methods.contains(where: \.isStatic)
+        || variableAccessors.contains(where: \.isStatic)
       {
         throw JavaTranslationError.protocolStaticRequirementsNotSupported
       }
 
-      let functions = try type.methods.map { method in
+      let functions = try methods.map { method in
         try translate(function: method)
       }
 
       // FIXME: Finish support for variables
-      if !type.variables.isEmpty {
+      if !variableAccessors.isEmpty {
         throw JavaTranslationError.protocolVariablesNotSupported
       }
 
-      let variables = try Dictionary(grouping: type.variables, by: { $0.swiftDecl.id }).map { (id, funcs) in
+      let variables = try Dictionary(grouping: variableAccessors, by: { $0.swiftDecl.id }).map { (id, funcs) in
         precondition(funcs.count > 0 && funcs.count <= 2, "Variables must contain a getter and optionally a setter")
         guard let getter = funcs.first(where: { $0.apiKind == .getter }) else {
           fatalError("Getter not found for variable with imported funcs: \(funcs)")

@@ -16,6 +16,11 @@ import SwiftJavaJNICore
 
 extension JavaType {
 
+  /// A half-open Swift range represented by its bounds on the Java heap.
+  static func swiftRange(_ bound: JavaType) -> JavaType {
+    .class(package: "org.swift.swiftkit.core", name: "SwiftRange", typeParameters: [bound.boxedType])
+  }
+
   /// The description of the type org.swift.swiftkit.core.collections.SwiftDictionaryMap<K, V>
   static func swiftDictionaryMap(_ K: JavaType, _ V: JavaType) -> JavaType {
     .class(package: "org.swift.swiftkit.core.collections", name: "SwiftDictionaryMap", typeParameters: [K.boxedType, V.boxedType])

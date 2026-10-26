@@ -29,6 +29,9 @@ func getJavaTypeAnnotations(swiftType: SwiftType, config: Configuration) -> [Jav
   case .array(let element): // check recursively for [[UInt8]] etc
     return getJavaTypeAnnotations(swiftType: element, config: config)
 
+  case .range(let bound):
+    return getJavaTypeAnnotations(swiftType: bound, config: config)
+
   case .set(let element) where element.isUnsignedInteger:
     return [JavaAnnotation.unsigned]
   case .set(let element):

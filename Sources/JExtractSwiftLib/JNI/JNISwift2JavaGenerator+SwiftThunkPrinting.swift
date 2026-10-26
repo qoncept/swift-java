@@ -722,6 +722,18 @@ extension JNISwift2JavaGenerator {
       let lowered = parameter.conversion.render(&printer, javaParameterName)
       arguments.append(lowered)
 
+      // Range conversion may post a Java exception. Stop before converting any
+      // subsequent arguments or calling Swift with invalid bounds.
+      if case .validRange = parameter.conversionCheck {
+        let name = JNISwift2JavaGenerator.indirectVariableName(for: javaParameterName)
+        let value = parameter.indirectConversion!.render(&printer, javaParameterName)
+        printer.print("let \(name) = \(value)")
+        printer.printGuardBlock("let \(name) = \(name)") { printer in
+          printer.print(dummyReturn(for: nativeSignature))
+        }
+        continue
+      }
+
       parameter.indirectConversion.flatMap {
         indirectVariables.append((javaParameterName, $0.render(&printer, javaParameterName)))
       }
@@ -734,7 +746,7 @@ extension JNISwift2JavaGenerator {
             JNISwift2JavaGenerator.indirectVariableName(for: javaParameterName),
           )
         )
-      case nil:
+      case .validRange, nil:
         break
       }
     }

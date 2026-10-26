@@ -370,6 +370,34 @@ downcall. Use `SwiftSet::toJavaSet` to copy into a `java.util.Set` on the Java h
    }
 }
 
+#### Ranges
+
+In JNI mode, Swift's half-open `Range<Bound>` maps to
+`org.swift.swiftkit.core.SwiftRange<T>`. For example, `Range<Int64>` uses
+`SwiftRange<Long>` and `Range<String>` uses `SwiftRange<String>`.
+The lower bound is inclusive and the upper bound is exclusive; equal bounds
+represent an empty range.
+
+```java
+SwiftRange<Long> range = MySwiftLibrary.int64Range(new SwiftRange<>(-5L, 10L));
+long lower = range.getLowerBound();
+long upper = range.getUpperBound();
+```
+
+The bounds are copied into an immutable Java container. The container needs no
+`SwiftArena`; bounds that wrap Swift objects still follow those objects' normal
+lifetime requirements. Bounds use the existing conversions for primitives,
+strings, and jextract-imported types conforming to Swift's `Comparable`.
+
+When Java passes a range to Swift, its bound types and ordering are checked
+before calling the Swift API. Invalid types, reversed bounds, and unordered
+floating-point bounds (NaN) throw `IllegalArgumentException`; null ranges or
+bounds throw `NullPointerException`. Ordering is checked in Swift, because Java's
+`Comparable` can order values differently and Swift wrappers need not implement it.
+
+This support covers range parameters and results. FFM, `ClosedRange`, partial
+ranges, and ranges nested in Optional or collection types are not yet supported.
+
 ### Bytes and buffers
 
 There are several ways to pass raw bytes, differing in whether the bytes are

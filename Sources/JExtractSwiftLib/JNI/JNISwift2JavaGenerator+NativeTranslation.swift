@@ -147,6 +147,19 @@ extension JNISwift2JavaGenerator {
               parameterName: parameterName
             )
 
+          case .range(let bound):
+            let bridgeType = try bridgeTypeName(for: bound)
+            return NativeParameter(
+              parameters: [JavaParameter(name: parameterName, type: .class(package: "org.swift.swiftkit.core", name: "SwiftRange"))],
+              conversion: .constant("\(JNISwift2JavaGenerator.indirectVariableName(for: parameterName))"),
+              indirectConversion: .method(
+                .constant("SwiftRangeBridge<\(bridgeType)>"),
+                function: "fromJavaObject",
+                arguments: [(nil, .placeholder), ("in", .constant("environment"))]
+              ),
+              conversionCheck: .validRange
+            )
+
           case .set(let element):
             return try translateSetParameter(
               elementType: element,
@@ -350,6 +363,10 @@ extension JNISwift2JavaGenerator {
           genericParameters: genericParameters,
           genericRequirements: genericRequirements
         )
+        // A tuple cannot currently propagate an element's validation step.
+        if case .validRange = elementNative.conversionCheck {
+          throw JavaTranslationError.unsupportedSwiftType(element.type)
+        }
         allJNIParameters.append(contentsOf: elementNative.parameters)
         elementConversions.append((label: element.label, conversion: elementNative.conversion))
       }
@@ -810,6 +827,18 @@ extension JNISwift2JavaGenerator {
               keyType: keyType,
               valueType: valueType,
               resultName: resultName
+            )
+
+          case .range(let bound):
+            let bridgeType = try bridgeTypeName(for: bound)
+            return NativeResult(
+              javaType: .class(package: "org.swift.swiftkit.core", name: "SwiftRange"),
+              conversion: .method(
+                .constant("SwiftRangeBridge<\(bridgeType)>"),
+                function: "toJavaObject",
+                arguments: [(nil, .placeholder), ("in", .constant("environment"))]
+              ),
+              outParameters: []
             )
 
           case .set(let elementType):
@@ -2155,10 +2184,13 @@ extension JNISwift2JavaGenerator {
 
   enum NativeSwiftConversionCheck {
     case check32BitIntOverflow(typeWithMinAndMax: SwiftType)
+    case validRange
 
     // Returns the check string
     func render(_ printer: inout SwiftPrinter, _ placeholder: String) -> String {
       switch self {
+      case .validRange:
+        return "\(placeholder) != nil"
       case .check32BitIntOverflow(let minMaxSource):
         return "\(placeholder) >= \(minMaxSource).min && \(placeholder) <= \(minMaxSource).max"
       }

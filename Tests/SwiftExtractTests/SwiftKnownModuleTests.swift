@@ -26,7 +26,7 @@ struct SwiftKnownModuleSuite {
     "UInt", "UInt8", "UInt16", "UInt32", "UInt64",
     "Float", "Double",
     "Bool", "String",
-    "Array", "Dictionary", "Set", "Optional",
+    "Array", "Dictionary", "Set", "Optional", "Range",
     "OpaquePointer",
   ])
   func swiftModuleContains(_ typeName: String) throws {

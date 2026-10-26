@@ -52,7 +52,7 @@ enum JNIJavaTypeTranslator {
       .essentialsData, .essentialsDataProtocol,
       .array,
       .dictionary,
-      .set,
+      .set, .range,
       .foundationDate, .essentialsDate,
       .foundationUUID, .essentialsUUID,
       .foundationURL, .essentialsURL:
@@ -80,7 +80,7 @@ enum JNIJavaTypeTranslator {
       .essentialsData, .essentialsDataProtocol,
       .array,
       .dictionary,
-      .set,
+      .set, .range,
       .foundationDate, .essentialsDate,
       .foundationUUID, .essentialsUUID,
       .foundationURL, .essentialsURL:
@@ -108,7 +108,7 @@ enum JNIJavaTypeTranslator {
       .essentialsData, .essentialsDataProtocol,
       .array,
       .dictionary,
-      .set,
+      .set, .range,
       .foundationDate, .essentialsDate,
       .foundationUUID, .essentialsUUID,
       .foundationURL, .essentialsURL:

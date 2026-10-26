@@ -256,7 +256,7 @@ extension JNISwift2JavaGenerator {
       case .nominal(let nominalType):
         if let knownType = nominalType.nominalTypeDecl.knownTypeKind {
           switch knownType {
-          case .optional, .array, .dictionary, .set:
+          case .optional, .array, .dictionary, .set, .range:
             throw JavaTranslationError.unsupportedSwiftType(known: .array(elementType))
           default:
             break
@@ -350,7 +350,7 @@ extension JNISwift2JavaGenerator {
       case .nominal(let nominalType):
         if let knownType = nominalType.nominalTypeDecl.knownTypeKind {
           switch knownType {
-          case .optional, .array, .dictionary, .set:
+          case .optional, .array, .dictionary, .set, .range:
             throw JavaTranslationError.unsupportedSwiftType(known: .array(elementType))
           default:
             break

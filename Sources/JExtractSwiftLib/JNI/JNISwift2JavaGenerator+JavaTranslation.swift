@@ -504,6 +504,13 @@ extension JNISwift2JavaGenerator {
               genericRequirements: genericRequirements,
             )
 
+          case .range(let bound):
+            let boundJavaType = try translateGenericTypeParameter(bound, genericParameters: genericParameters, genericRequirements: genericRequirements)
+            return TranslatedParameter(
+              parameter: JavaParameter(name: parameterName, type: .swiftRange(boundJavaType)),
+              conversion: .requireNonNull(.placeholder, message: "\(parameterName) must not be null"),
+            )
+
           case .set(let elementType):
             return try translateSetParameter(
               elementType: elementType,
@@ -970,6 +977,16 @@ extension JNISwift2JavaGenerator {
               genericRequirements: genericRequirements,
             )
 
+          case .range(let bound):
+            let boundJavaType = try translateGenericTypeParameter(bound, genericParameters: genericParameters, genericRequirements: genericRequirements)
+            let rangeType = JavaType.swiftRange(boundJavaType)
+            return TranslatedResult(
+              javaType: rangeType,
+              nativeJavaType: .class(package: "org.swift.swiftkit.core", name: "SwiftRange"),
+              outParameters: [],
+              conversion: .placeholder
+            )
+
           case .set(let element):
             return try translateSetResult(
               elementType: element,
@@ -1158,6 +1175,9 @@ extension JNISwift2JavaGenerator {
               genericRequirements: genericRequirements,
             )
             return .swiftDictionaryMap(keyJavaType, valueJavaType)
+
+          case .range(let bound):
+            return .swiftRange(try translateGenericTypeParameter(bound, genericParameters: genericParameters, genericRequirements: genericRequirements))
 
           case .set(let element):
             let elementJavaType = try translateGenericTypeParameter(

@@ -104,6 +104,8 @@ private let swiftSourceFile: SourceFileSyntax = """
 
   public struct Set<Element> {}
 
+  public struct Range<Bound> {}
+
   public protocol Error {}
 
   // FIXME: Support 'typealias Void = ()'

@@ -532,7 +532,7 @@ extension JNISwift2JavaGenerator {
       return
     }
 
-    printAllSwiftFunctionHelperClasses(&printer, decl)
+    printAllSwiftFunctionHelperClasses(&printer, decl, translatedDecl)
 
     printCDecl(
       &printer,
@@ -550,14 +550,13 @@ extension JNISwift2JavaGenerator {
   private func printAllSwiftFunctionHelperClasses(
     _ printer: inout SwiftPrinter,
     _ decl: ExtractedFunc,
+    _ translatedDecl: TranslatedFunctionDecl,
   ) {
     // Emit the `@JavaInterface` Swift wrappers for any `@escaping` closure parameters.
-    if let translatedDecl = translatedDecl(for: decl) {
-      printEscapingClosureSwiftFunctionHelperClasses(&printer, translatedDecl)
-    }
+    printEscapingClosureSwiftFunctionHelperClasses(&printer, translatedDecl)
 
     // Emit the `@JavaInterface` Swift wrappers any existential / protocol parameters.
-    printProtocolParameterSwiftFunctionHelperClasses(&printer, decl)
+    printProtocolParameterSwiftFunctionHelperClasses(&printer, decl, javaName: translatedDecl.name)
   }
 
   /// Emits Swift wrapper types for any parameter type that is a protocol
@@ -565,6 +564,7 @@ extension JNISwift2JavaGenerator {
   private func printProtocolParameterSwiftFunctionHelperClasses(
     _ printer: inout SwiftPrinter,
     _ decl: ExtractedFunc,
+    javaName: String,
   ) {
     let protocolParameters = decl.functionSignature.parameters.compactMap { parameter in
       if let concreteType = parameter.type.typeIn(
@@ -618,7 +618,10 @@ extension JNISwift2JavaGenerator {
         fatalError()
       }
       let swiftClassName = JNISwift2JavaGenerator.protocolParameterWrapperClassName(
-        methodName: decl.name,
+        methodName: JavaTranslation.protocolWrapperMethodName(
+          for: decl,
+          javaName: javaName
+        ),
         parameterName: parameterName,
         parentName: decl.parentType?.asNominalType?.nominalTypeDecl.qualifiedTypeName ?? SwiftQualifiedTypeName(swiftModuleName),
       )

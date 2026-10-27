@@ -35,3 +35,15 @@ public final class ProtocolParameterOverloads {
     result + callback.value() + extra
   }
 }
+
+public final class ProtocolPropertyService {
+  public var callback: any OverloadedCallback
+
+  public init(callback: some OverloadedCallback) {
+    self.callback = callback
+  }
+
+  public func read() -> Int64 {
+    callback.value()
+  }
+}

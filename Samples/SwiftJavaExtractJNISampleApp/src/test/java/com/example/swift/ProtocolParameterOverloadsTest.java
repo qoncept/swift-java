@@ -31,4 +31,15 @@ public class ProtocolParameterOverloadsTest {
             assertEquals(27, second.calculate(callback, 2));
         }
     }
+
+    @Test
+    void propertySetterAcceptsAndRetainsJavaCallback() {
+        try (var arena = SwiftArena.ofConfined()) {
+            var service = ProtocolPropertyService.init(() -> 10, arena);
+            assertEquals(10, service.read());
+            service.setCallback(() -> 42);
+            assertEquals(42, service.read());
+        }
+    }
+
 }

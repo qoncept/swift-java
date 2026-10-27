@@ -194,6 +194,14 @@ extension JNISwift2JavaGenerator {
       )
     }
 
+    /// Initializer overloads can share a protocol adapter even when their Java
+    /// names are disambiguated. Other declarations use the Java name, which is
+    /// also a valid Swift identifier for operators and Java keywords.
+    static func protocolWrapperMethodName(for decl: ExtractedFunc, javaName: String) -> String {
+      if case .initializer = decl.apiKind { return decl.name }
+      return javaName
+    }
+
     func translate(_ decl: ExtractedFunc) throws -> TranslatedFunctionDecl {
       let nativeTranslation = NativeJavaTranslation(
         config: self.config,
@@ -226,6 +234,7 @@ extension JNISwift2JavaGenerator {
         functionSignature: decl.functionSignature,
         translatedFunctionSignature: translatedFunctionSignature,
         methodName: javaName,
+        protocolWrapperMethodName: Self.protocolWrapperMethodName(for: decl, javaName: javaName),
         parentName: parentName,
       )
 

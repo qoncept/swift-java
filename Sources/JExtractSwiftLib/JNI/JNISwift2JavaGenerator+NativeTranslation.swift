@@ -32,6 +32,7 @@ extension JNISwift2JavaGenerator {
       functionSignature: SwiftFunctionSignature,
       translatedFunctionSignature: TranslatedFunctionSignature,
       methodName: String,
+      protocolWrapperMethodName: String,
       parentName: SwiftQualifiedTypeName
     ) throws -> NativeFunctionSignature {
       let parameters = try zip(translatedFunctionSignature.parameters, functionSignature.parameters).map {
@@ -42,6 +43,7 @@ extension JNISwift2JavaGenerator {
           type: swiftParameter.type,
           parameterName: parameterName,
           methodName: methodName,
+          protocolWrapperMethodName: protocolWrapperMethodName,
           parentName: parentName,
           genericParameters: functionSignature.genericParameters,
           genericRequirements: functionSignature.genericRequirements
@@ -74,6 +76,7 @@ extension JNISwift2JavaGenerator {
               type: swiftType,
               parameterName: "selfPointer",
               methodName: methodName,
+              protocolWrapperMethodName: protocolWrapperMethodName,
               parentName: parentName,
               genericParameters: functionSignature.genericParameters,
               genericRequirements: functionSignature.genericRequirements
@@ -91,6 +94,7 @@ extension JNISwift2JavaGenerator {
             type: .metatype(selfType),
             parameterName: "selfTypePointer",
             methodName: methodName,
+            protocolWrapperMethodName: protocolWrapperMethodName,
             parentName: parentName,
             genericParameters: functionSignature.genericParameters,
             genericRequirements: functionSignature.genericRequirements
@@ -121,6 +125,7 @@ extension JNISwift2JavaGenerator {
       type: SwiftType,
       parameterName: String,
       methodName: String,
+      protocolWrapperMethodName: String,
       parentName: SwiftQualifiedTypeName,
       genericParameters: [SwiftGenericParameterDeclaration],
       genericRequirements: [SwiftGenericRequirement]
@@ -277,7 +282,7 @@ extension JNISwift2JavaGenerator {
       case .opaque(let proto), .existential(let proto):
         return try translateProtocolParameter(
           protocolType: proto,
-          methodName: methodName,
+          methodName: protocolWrapperMethodName,
           parameterName: parameterName,
           parentName: parentName
         )
@@ -286,7 +291,7 @@ extension JNISwift2JavaGenerator {
         if let concreteTy = type.typeIn(genericParameters: genericParameters, genericRequirements: genericRequirements) {
           return try translateProtocolParameter(
             protocolType: concreteTy,
-            methodName: methodName,
+            methodName: protocolWrapperMethodName,
             parameterName: parameterName,
             parentName: parentName
           )
@@ -309,6 +314,7 @@ extension JNISwift2JavaGenerator {
           type: elements[0].type,
           parameterName: parameterName,
           methodName: methodName,
+          protocolWrapperMethodName: protocolWrapperMethodName,
           parentName: parentName,
           genericParameters: genericParameters,
           genericRequirements: genericRequirements
@@ -319,6 +325,7 @@ extension JNISwift2JavaGenerator {
           elements: elements,
           parameterName: parameterName,
           methodName: methodName,
+          protocolWrapperMethodName: protocolWrapperMethodName,
           parentName: parentName,
           genericParameters: genericParameters,
           genericRequirements: genericRequirements
@@ -333,6 +340,7 @@ extension JNISwift2JavaGenerator {
       elements: [SwiftTupleElement],
       parameterName: String,
       methodName: String,
+      protocolWrapperMethodName: String,
       parentName: SwiftQualifiedTypeName,
       genericParameters: [SwiftGenericParameterDeclaration],
       genericRequirements: [SwiftGenericRequirement]
@@ -346,6 +354,7 @@ extension JNISwift2JavaGenerator {
           type: element.type,
           parameterName: elementParamName,
           methodName: methodName,
+          protocolWrapperMethodName: protocolWrapperMethodName,
           parentName: parentName,
           genericParameters: genericParameters,
           genericRequirements: genericRequirements

@@ -55,4 +55,52 @@ struct JNIProtocolParameterOverloadTests {
       #expect(output.components(separatedBy: "final class \(name):").count - 1 == 1)
     }
   }
+
+  @Test("Protocol adapters use the same names in declarations and conversions")
+  func renamedMethodsAndSetter() throws {
+    var config = Configuration()
+    config.swiftModule = "SwiftModule"
+    config.enableJavaCallbacks = true
+    let analyzer = makeSwiftJavaAnalyzer(config: config)
+    try analyzer.analyze(
+      path: "/fake/Adapters.swiftinterface",
+      text: """
+        public protocol Store { func load() -> String }
+        public struct Service {
+          public var store: any Store
+          public init(store: some Store)
+          public init(store: some Store, extra: Int64)
+          public init(first store: some Store)
+          public init(second store: some Store)
+          public func use(first value: some Store)
+          public func use(second value: some Store)
+          public func `default`(_ value: some Store)
+        }
+        """
+    )
+    let generator = JNISwift2JavaGenerator(
+      config: config,
+      translator: analyzer,
+      javaPackage: "com.example.swift",
+      swiftOutputDirectory: "/fake",
+      javaOutputDirectory: "/fake",
+      javaClassLookupTable: [:],
+      moduleJavaPackages: [:]
+    )
+    var printer = SwiftPrinter(mode: .accumulateAll)
+    try generator.writeSwiftThunkSources(&printer)
+    let output = printer.finalize()
+    for (name, references) in [
+      ("_Service_setStore_newValue_Wrapper", 1),
+      ("_Service_init_store_Wrapper", 4),
+      ("_Service_useFirst_value_Wrapper", 1),
+      ("_Service_useSecond_value_Wrapper", 1),
+      ("_Service_default__value_Wrapper", 1),
+    ] {
+      #expect(output.components(separatedBy: "final class \(name):").count - 1 == 1)
+      #expect(output.components(separatedBy: "= \(name)(").count - 1 == references)
+    }
+    #expect(!output.contains("_Service_store_newValue_Wrapper"))
+  }
+
 }
